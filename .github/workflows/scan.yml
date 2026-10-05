@@ -1,0 +1,31 @@
+name: Lead scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *" # daily ~06:17 Israel; each run fetches at most 30 new queries
+
+permissions:
+  contents: write
+
+concurrency: lead-scan
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m unittest
+      - run: python -m lead_finder.run
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+      - name: Commit results
+        run: |
+          git config user.name "lead-scan-bot"
+          git config user.email "lead-scan-bot@users.noreply.github.com"
+          git add data output
+          git diff --cached --quiet || git commit -m "Lead scan results $(date -u +%F)"
+          git push
