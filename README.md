@@ -4,7 +4,7 @@
 מחפש סימנים לבעיות תיאום ותהליכים ידניים, ומדרג אותם.
 
 ## איך זה רץ
-- GitHub Actions (`.github/workflows/scan.yml`) רץ כל יום ומבצע עד 30 חיפושים ב-Google Places,
+- GitHub Actions (`.github/workflows/scan.yml`) רץ כל יום ומבצע עד 25 חיפושים ב-Google Places,
   כדי להישאר בתוך המכסה החינמית. כל עיר+ענף נשמרים ב-`data/places/` ומחופשים מחדש רק אחרי 30 יום.
 - צריך סוד ב-GitHub בשם `GOOGLE_PLACES_API_KEY`.
 - הרצה ידנית: `python -m lead_finder.run`

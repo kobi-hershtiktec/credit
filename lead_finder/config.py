@@ -26,9 +26,9 @@ CATEGORIES = {
     "movers": "הובלות",
 }
 
-# Google free tier for this SKU is 1,000 requests/month; the key's daily
-# quota is set to 30 in Google Cloud, so stop before hitting it.
-MAX_REQUESTS_PER_RUN = 30
+# Google free tier for this SKU is 1,000 requests/month. The scan runs once a
+# day, so 25 per run stays under it (775/month) with room for manual runs.
+MAX_REQUESTS_PER_RUN = 25
 
 # Re-query a city/category only after this many days.
 CACHE_DAYS = 30

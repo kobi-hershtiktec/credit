@@ -3,7 +3,7 @@ name: Lead scan
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *" # daily ~06:17 Israel; each run fetches at most 30 new queries
+    - cron: "17 3 * * *" # daily ~06:17 Israel; each run fetches at most 25 new queries
 
 permissions:
   contents: write
