@@ -27,6 +27,9 @@ class SignalsTest(unittest.TestCase):
 
     def test_website_signals(self):
         html = '<a href="/form.pdf">טופס</a> לתיאום התקשרו <a href="https://wa.me/972">ווטסאפ</a> דרושה סדרנית'
+        self.assertFalse(signals.website_signals("דרושה הדברה? התקשרו עכשיו")["hiring_on_site"])
+        self.assertFalse(signals.is_service_business({"primaryTypeDisplayName": {"text": "חנות למוצרי בניין"}}))
+        self.assertTrue(signals.is_service_business({"primaryTypeDisplayName": {"text": "מנעולן"}}))
         s = signals.website_signals(html)
         self.assertEqual(set(s["manual"]), {"pdf_form", "whatsapp_contact", "call_to_schedule"})
         self.assertTrue(s["hiring_on_site"])

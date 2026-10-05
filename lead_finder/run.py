@@ -41,7 +41,7 @@ def collect() -> dict[str, dict]:
                     continue
                 requests_made += made
             for p in results:
-                if p.get("businessStatus", "OPERATIONAL") != "OPERATIONAL":
+                if p.get("businessStatus", "OPERATIONAL") != "OPERATIONAL" or not signals.is_service_business(p):
                     continue
                 b = by_id.setdefault(p["id"], {"place": p, "categories": set(), "cities": set()})
                 b["categories"].add(cat)
@@ -51,12 +51,14 @@ def collect() -> dict[str, dict]:
 
 
 def scan_sites(businesses: dict[str, dict]) -> dict[str, dict | None]:
+    """Website signals per URL; unreachable sites are left out of the cache so they are retried."""
     cache = json.loads(SITES_FILE.read_text()) if SITES_FILE.exists() else {}
     for b in businesses.values():
         url = b["place"].get("websiteUri")
         if url and url not in cache:
             html = signals.fetch_html(url)
-            cache[url] = signals.website_signals(html) if html is not None else None
+            if html is not None:
+                cache[url] = signals.website_signals(html)
     SITES_FILE.parent.mkdir(parents=True, exist_ok=True)
     SITES_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
     return cache
@@ -85,6 +87,7 @@ def build_rows(businesses: dict[str, dict], sites: dict) -> list[dict]:
             "already_digital": site["already_digital"] if site else "",
             "site_status": "none" if not url else ("ok" if site else "unreachable"),
             "complaint_examples": " || ".join(complaints),
+            "type": (p.get("primaryTypeDisplayName") or {}).get("text", ""),
             "address": p.get("formattedAddress", ""),
             "maps": p.get("googleMapsUri", ""),
             "place_id": pid,

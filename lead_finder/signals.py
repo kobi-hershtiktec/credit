@@ -38,7 +38,20 @@ MANUAL_PROCESS = {
 # Website hints the business already runs some digital system.
 ALREADY_DIGITAL = r"הזמנת תור אונליין|קביעת תור אונליין|זימון תורים|calendly|אזור אישי|מעקב (?:הזמנה|קריאה)"
 
-HIRING = r"דרוש|סדרן|סדרנית|מוקדנ|מזכיר|רכז(?:ת)? שירות|תיאום טכנאים"
+# A job ad for a coordination role: "דרוש/ה ... סדרן/ית" etc. "דרושה" alone is
+# not enough, it also appears in service copy ("דרושה הדברה?").
+HIRING = r"דרוש(?:ים|ה|ות|/ה)?[^<\n]{0,60}(?:סדרנ|סדרן|מוקדנ|מזכיר|רכז|תיאום|נציג(?:ת)? שירות)"
+
+# WhatsApp contact is shown but not scored: nearly every Israeli SMB site has it.
+SCORED_MANUAL = {"pdf_form", "call_to_schedule"}
+
+# Google place types that are shops/suppliers, not field-service businesses.
+NON_SERVICE_TYPES = ["חנות", "יצרן", "סיטונאי", "ספקים", "כלי רכב", "חווה", "משתלה", "גן ילדים", "כנסייה"]
+
+
+def is_service_business(place: dict) -> bool:
+    t = (place.get("primaryTypeDisplayName") or {}).get("text", "")
+    return not any(w in t for w in NON_SERVICE_TYPES)
 
 
 def review_complaints(reviews: list[dict]) -> list[str]:
@@ -81,7 +94,7 @@ def size_points(review_count: int) -> int:
 def score(review_count: int, complaints: list[str], site: dict | None) -> int:
     pain = min(30, 10 * len(complaints))
     if site:
-        pain += min(15, 5 * len(site["manual"]))
+        pain += 7 * len(SCORED_MANUAL.intersection(site["manual"]))
         pain += 15 if site["hiring_on_site"] else 0
         pain -= 10 if site["already_digital"] else 0
     return max(0, pain) + size_points(review_count)
