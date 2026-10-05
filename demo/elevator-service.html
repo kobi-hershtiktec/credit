@@ -1,0 +1,525 @@
+<title>מוקד מעליות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one control room, three seats. Top bar with view switch; manager = dashboard grid, committee = phone-width portal, technician = phone frame. Brushed-steel neutrals, the amber of a lit elevator call button as the only accent. */
+:root {
+  --bg: #eef0f2;
+  --surface: #ffffff;
+  --sunken: #e3e6ea;
+  --line: #cfd4da;
+  --fg: #1b2026;
+  --muted: #5d6670;
+  --accent: #c77a00;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbefd9;
+  --ok: #1f7a4d;
+  --ok-soft: #dcf1e5;
+  --warn: #9a6200;
+  --warn-soft: #fbefd2;
+  --crit: #b3261e;
+  --crit-soft: #fbe2df;
+  --info: #2c5f8a;
+  --info-soft: #dde9f4;
+  --led-bg: #15181c;
+  --led: #ffb020;
+  --font-display: "Secular One", "IBM Plex Sans Hebrew", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Hebrew", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121519; --surface: #1b1f24; --sunken: #23282e; --line: #333a42; --fg: #e8ebee; --muted: #9aa3ad;
+    --accent: #f0a12a; --accent-ink: #1b1204; --accent-soft: #3a2a10;
+    --ok: #5fcf95; --ok-soft: #173326; --warn: #f0b74f; --warn-soft: #3a2c10; --crit: #ff8a80; --crit-soft: #3d1a18;
+    --info: #8cbbe6; --info-soft: #1a2b3b; --led-bg: #0a0c0e; --led: #ffb020;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121519; --surface: #1b1f24; --sunken: #23282e; --line: #333a42; --fg: #e8ebee; --muted: #9aa3ad;
+  --accent: #f0a12a; --accent-ink: #1b1204; --accent-soft: #3a2a10;
+  --ok: #5fcf95; --ok-soft: #173326; --warn: #f0b74f; --warn-soft: #3a2c10; --crit: #ff8a80; --crit-soft: #3d1a18;
+  --info: #8cbbe6; --info-soft: #1a2b3b; --led-bg: #0a0c0e; --led: #ffb020;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.app { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 40px; display: grid; gap: 16px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; }
+h3 { font-size: .95rem; font-weight: 600; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Top bar */
+.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.led { background: var(--led-bg); color: var(--led); font-family: var(--font-mono); font-weight: 600; border-radius: 6px; padding: 4px 10px; font-size: 1.1rem; letter-spacing: .08em; text-shadow: 0 0 8px color-mix(in srgb, var(--led) 60%, transparent); display: inline-flex; gap: 6px; align-items: center; }
+.led .arrow { font-size: .8rem; }
+.brand h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; line-height: 1.1; }
+.company { border: 0; background: transparent; border-bottom: 1px dashed var(--line); padding: 0 0 1px; font-size: .9rem; color: var(--muted); width: 14em; max-width: 100%; }
+.company:hover, .company:focus { border-bottom-color: var(--accent); color: var(--fg); }
+.seats { display: flex; background: var(--sunken); border-radius: 999px; padding: 4px; gap: 2px; flex-wrap: wrap; }
+.seats button { border: 0; background: transparent; border-radius: 999px; padding: 7px 16px; font-weight: 600; color: var(--muted); }
+.seats button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.demo-note { font-size: .8rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .03em; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--warn); }
+
+/* Tour */
+.tour { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tour div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; font-size: .86rem; display: flex; gap: 10px; align-items: flex-start; }
+.tour b { font-family: var(--font-mono); color: var(--accent); }
+@media (max-width: 760px) { .tour { grid-template-columns: 1fr; } }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
+/* Manager */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.kpi .n { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 600; line-height: 1.1; }
+.kpi .l { font-size: .82rem; color: var(--muted); }
+.kpi.crit .n { color: var(--crit); }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mgr { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .mgr { grid-template-columns: 1fr; } }
+.side { display: grid; gap: 16px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th { text-align: right; font-weight: 600; font-size: .75rem; letter-spacing: .03em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr.is-crit td:first-child { box-shadow: inset -3px 0 0 var(--crit); }
+tr.flash td { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.addr { font-size: .8rem; color: var(--muted); }
+.pill { display: inline-block; white-space: nowrap; font-size: .75rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.p-new { background: var(--crit-soft); color: var(--crit); }
+.p-assigned { background: var(--info-soft); color: var(--info); }
+.p-parts, .p-quote { background: var(--warn-soft); color: var(--warn); }
+.p-done { background: var(--ok-soft); color: var(--ok); }
+.assign { display: flex; gap: 6px; flex-wrap: wrap; }
+select, input[type="text"], textarea { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.block { width: 100%; padding: 10px; }
+.list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.list li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.list li:last-child { border-bottom: 0; }
+.list .right { text-align: left; white-space: nowrap; }
+.techs li { align-items: center; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-inline-end: 6px; }
+.dot.free { background: var(--ok); } .dot.busy { background: var(--warn); }
+
+/* Phone frames */
+.seat-wrap { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 800px) { .seat-wrap { grid-template-columns: 1fr; } }
+.phone { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: 18px 16px; display: grid; gap: 14px; box-shadow: 0 8px 30px rgb(0 0 0 / .08); min-width: 0; }
+.phone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.explain { display: grid; gap: 10px; font-size: .92rem; max-width: 60ch; }
+.explain h2 { font-size: 1.3rem; }
+.explain ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 6px; }
+.status-board { background: var(--led-bg); color: var(--led); border-radius: 14px; padding: 14px; display: grid; gap: 4px; }
+.status-board .big { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 600; }
+.status-board .small { font-size: .8rem; opacity: .85; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: .82rem; font-weight: 600; }
+.field textarea { min-height: 64px; resize: vertical; }
+.check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.timeline li { position: relative; padding-inline-start: 22px; padding-block: 0 12px; font-size: .88rem; }
+.timeline li::before { content: ""; position: absolute; inset-inline-start: 4px; top: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.timeline li::after { content: ""; position: absolute; inset-inline-start: 8px; top: 16px; bottom: 0; width: 1px; background: var(--line); }
+.timeline li:last-child::after { display: none; }
+.timeline li.on::before { background: var(--accent); }
+.timeline time { color: var(--muted); font-size: .78rem; font-family: var(--font-mono); }
+.quote { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
+.quote .sum { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 600; }
+.sms { display: grid; gap: 8px; }
+.bubble { background: var(--sunken); border-radius: 14px 14px 14px 4px; padding: 8px 12px; font-size: .86rem; max-width: 92%; }
+.bubble time { display: block; font-size: .72rem; color: var(--muted); font-family: var(--font-mono); }
+.task { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; background: var(--surface); text-align: right; width: 100%; }
+.task[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.task .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.history { background: var(--sunken); border-radius: 10px; padding: 10px 12px; font-size: .84rem; display: grid; gap: 4px; }
+.sig { width: 100%; height: 110px; border: 1px dashed var(--line); border-radius: 10px; background: var(--sunken); touch-action: none; display: block; }
+.toast { position: fixed; inset-inline: 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin-inline: auto; width: max-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: .9rem; z-index: 10; }
+.empty { color: var(--muted); font-size: .88rem; padding: 8px 0; }
+@media (prefers-reduced-motion: reduce) { tr.flash td { animation: none; } }
+</style>
+
+<div class="app" dir="rtl" lang="he">
+  <header class="top">
+    <div class="brand">
+      <span class="led" aria-hidden="true"><span class="arrow">▲</span><span id="ledFloor">08</span></span>
+      <div>
+        <h1>מוקד מעליות</h1>
+        <input class="company" id="company" type="text" aria-label="שם החברה" value="מעליות לדוגמה בע״מ">
+      </div>
+    </div>
+    <div class="seats" role="tablist" aria-label="תצוגה">
+      <button role="tab" id="tab-mgr" aria-selected="true" data-seat="mgr">מנהל שירות</button>
+      <button role="tab" id="tab-vaad" aria-selected="false" data-seat="vaad">ועד הבית</button>
+      <button role="tab" id="tab-tech" aria-selected="false" data-seat="tech">טכנאי</button>
+    </div>
+  </header>
+  <p class="demo-note"><span class="tag">דמו</span> כל הנתונים לדוגמה. אפשר ללחוץ על הכול, והשינויים עוברים בין שלוש התצוגות.</p>
+
+  <section class="tour" aria-label="סיור מודרך">
+    <div><b>1</b><span>בתצוגת <strong>ועד הבית</strong>: פותחים קריאה על תקלה ורואים SMS שנשלח אוטומטית.</span></div>
+    <div><b>2</b><span>בתצוגת <strong>מנהל שירות</strong>: הקריאה מופיעה למעלה. משבצים לה טכנאי.</span></div>
+    <div><b>3</b><span>בתצוגת <strong>טכנאי</strong>: רואים את היסטוריית המעלית, ממלאים דוח, הלקוח חותם. הוועד מקבל עדכון.</span></div>
+  </section>
+
+  <!-- Manager -->
+  <section id="seat-mgr" class="app" style="padding:0" aria-labelledby="tab-mgr">
+    <div class="kpis" id="kpis"></div>
+    <div class="mgr">
+      <div class="panel">
+        <div class="panel-head"><h2>קריאות פתוחות</h2><span class="muted" id="openCount"></span></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>קריאה</th><th>מעלית</th><th>תקלה</th><th>פתוחה</th><th>סטטוס</th><th>שיבוץ</th></tr></thead>
+          <tbody id="callRows"></tbody>
+        </table></div>
+      </div>
+      <div class="side">
+        <div class="panel">
+          <h2>בדיקות חצי־שנתיות</h2>
+          <ul class="list" id="inspections"></ul>
+        </div>
+        <div class="panel">
+          <h2>תקלות חוזרות · 30 יום</h2>
+          <ul class="list" id="repeats"></ul>
+        </div>
+        <div class="panel">
+          <h2>טכנאים עכשיו</h2>
+          <ul class="list techs" id="techList"></ul>
+        </div>
+        <div class="panel">
+          <h2>חלקים במלאי נמוך</h2>
+          <ul class="list" id="parts"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Committee -->
+  <section id="seat-vaad" hidden aria-labelledby="tab-vaad">
+    <div class="seat-wrap">
+      <div class="phone">
+        <div class="phone-head"><h3>שד׳ ירושלים 40, אשדוד</h3><span class="muted mono">E-102</span></div>
+        <div class="status-board" id="vaadBoard"></div>
+        <div id="vaadQuote"></div>
+        <form id="newCall" class="panel" style="padding:12px">
+          <h3>פתיחת קריאה</h3>
+          <div class="field">
+            <label for="ncType">מה קרה?</label>
+            <select id="ncType">
+              <option>המעלית לא מגיעה לקומה</option>
+              <option>דלת לא נסגרת</option>
+              <option>רעש חריג בנסיעה</option>
+              <option>המעלית עוצרת בין קומות</option>
+              <option>תאורה בתא לא עובדת</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ncNote">פרטים (לא חובה)</label>
+            <textarea id="ncNote" placeholder="למשל: קורה בעיקר בקומה 3, מאז הבוקר"></textarea>
+          </div>
+          <label class="check"><input type="checkbox" id="ncStuck"> יש מישהו תקוע בתוך המעלית</label>
+          <button class="btn primary block" type="submit">שלח קריאה</button>
+        </form>
+        <div class="panel" style="padding:12px">
+          <h3>הקריאות של הבניין</h3>
+          <ul class="timeline" id="vaadTimeline"></ul>
+        </div>
+        <div class="panel" style="padding:12px">
+          <h3>הודעות SMS שקיבלתם</h3>
+          <div class="sms" id="smsLog"></div>
+        </div>
+      </div>
+      <div class="explain">
+        <h2>מה הוועד רואה</h2>
+        <p>הדיירים מפסיקים להתקשר שוב ושוב למוקד, כי הסטטוס מולם כל הזמן.</p>
+        <ul>
+          <li>פתיחת קריאה בטלפון, בלי להמתין על הקו.</li>
+          <li>כשיש מישהו תקוע, הקריאה קופצת לראש הרשימה אצל המנהל.</li>
+          <li>SMS אוטומטי בכל שלב: נפתחה, טכנאי בדרך, ממתין לחלק, טופלה.</li>
+          <li>הצעת מחיר לתיקון מגיעה עם הסבר, ומאשרים אותה בלחיצה.</li>
+          <li>תאריך הבדיקה החצי־שנתית הבאה מופיע לוועד, כדי שלא יופתע.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technician -->
+  <section id="seat-tech" hidden aria-labelledby="tab-tech">
+    <div class="seat-wrap">
+      <div class="phone">
+        <div class="phone-head"><h3>שלום, <span id="techName">אלון</span></h3>
+          <select id="techPick" aria-label="בחר טכנאי"></select>
+        </div>
+        <div id="techTasks" style="display:grid;gap:8px"></div>
+        <div id="techDetail"></div>
+      </div>
+      <div class="explain">
+        <h2>מה הטכנאי רואה</h2>
+        <p>הטכנאי מגיע למעלית כשהוא כבר יודע מה תוקן בה בפעם הקודמת.</p>
+        <ul>
+          <li>רשימת המשימות להיום, לפי דחיפות.</li>
+          <li>היסטוריית התקלות של אותה מעלית, כדי לזהות תקלה שחוזרת.</li>
+          <li>דוח עבודה וחתימת לקוח בטלפון, בלי טפסים בנייר.</li>
+          <li>כשהעבודה נסגרת, הוועד מקבל SMS והמנהל רואה את זה מיד.</li>
+          <li>"ממתין לחלק" מעדכן את הוועד בצפי, ומוסיף את החלק להזמנה.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const now = new Date();
+  const fmtTime = (d) => d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+  const minsAgo = (m) => new Date(now.getTime() - m * 60000);
+
+  const elevators = {
+    "E-101": { addr: "הרצל 12, אשקלון", floors: 8, next: "14.11.2026", inspector: "מ. לוי", status: "ok" },
+    "E-102": { addr: "שד׳ ירושלים 40, אשדוד", floors: 12, next: "21.10.2026", inspector: "ר. אזולאי", status: "soon" },
+    "E-103": { addr: "רוטשילד 5, ראשון לציון", floors: 9, next: "02.10.2026", inspector: "מ. לוי", status: "late" },
+    "E-104": { addr: "הנשיא 8, יבנה", floors: 6, next: "30.01.2027", inspector: "ש. דהן", status: "ok" },
+    "E-105": { addr: "הדקל 3, גן יבנה", floors: 7, next: "05.12.2026", inspector: "ר. אזולאי", status: "ok" },
+  };
+  const history = {
+    "E-101": ["12.09 · החלפת לחצן קומה 5", "03.07 · שימון מסילות (תחזוקה)"],
+    "E-102": ["28.09 · כיוון חיישן דלת", "11.09 · דלת לא נסגרת", "22.08 · דלת לא נסגרת"],
+    "E-103": ["30.09 · ריסט לבקר", "19.09 · עצירה בין קומות"],
+    "E-104": ["01.10 · עצירה בין קומות", "24.09 · עצירה בין קומות", "15.09 · החלפת ממסר"],
+    "E-105": ["05.08 · תחזוקה חודשית"],
+  };
+  const techs = [
+    { name: "זיו", area: "אשקלון" },
+    { name: "אלון", area: "יבנה וגן יבנה" },
+    { name: "מוחמד", area: "אשדוד" },
+    { name: "דניאל", area: "ראשון לציון" },
+  ];
+  const STATUS = {
+    new: ["חדשה", "p-new"], assigned: ["טכנאי בדרך", "p-assigned"], parts: ["ממתין לחלק", "p-parts"],
+    quote: ["ממתין לאישור הצעה", "p-quote"], done: ["טופלה", "p-done"],
+  };
+  let seq = 2042;
+  const calls = [
+    { id: "C-2041", el: "E-103", issue: "אדם תקוע בתא", stuck: true, opened: minsAgo(6), status: "new", tech: null },
+    { id: "C-2039", el: "E-104", issue: "המעלית עוצרת בין קומות", opened: minsAgo(48), status: "assigned", tech: "אלון", log: [] },
+    { id: "C-2035", el: "E-101", issue: "לוח פיקוד לא מגיב", opened: minsAgo(60 * 24 * 4), status: "parts", tech: "זיו", eta: "09.10" },
+    { id: "C-2030", el: "E-102", issue: "דלת לא נסגרת עד הסוף", opened: minsAgo(60 * 24 * 2), status: "quote", tech: "מוחמד", quote: 1850,
+      quoteWhy: "מנוע הדלת שחוק. החלפה כוללת חלק ועבודה. בלי החלפה התקלה תחזור." },
+  ];
+  const sms = [
+    { t: minsAgo(60 * 24 * 2), text: "קריאה C-2030 נפתחה: דלת לא נסגרת עד הסוף. נעדכן כשטכנאי ישובץ." },
+    { t: minsAgo(60 * 24 * 2 - 40), text: "הטכנאי מוחמד בדרך אליכם, צפי הגעה 35 דק׳." },
+    { t: minsAgo(60 * 24 * 1), text: "נמצאה תקלה במנוע הדלת. נשלחה הצעת מחיר לאישור הוועד." },
+  ];
+  const parts = [
+    { name: "לוח פיקוד דגם A3", qty: 0, min: 1, note: "הוזמן · יגיע 09.10" },
+    { name: "מנוע דלת", qty: 1, min: 2 },
+    { name: "חיישן דלת אינפרא", qty: 2, min: 4 },
+  ];
+  const signedTasks = new Set();
+  let selectedTask = null;
+
+  function age(d) {
+    const m = Math.max(1, Math.round((Date.now() - d.getTime()) / 60000));
+    if (m < 60) return m + " דק׳";
+    if (m < 60 * 24) return Math.round(m / 60) + " שע׳";
+    return Math.round(m / 1440) + " ימים";
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function pill(st) { const [label, cls] = STATUS[st]; return `<span class="pill ${cls}">${label}</span>`; }
+  function toast(msg) {
+    const t = $("#toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._h); toast._h = setTimeout(() => (t.hidden = true), 2600);
+  }
+  function addSms(el, text) { if (el === "E-102") sms.push({ t: new Date(), text }); }
+  const company = () => $("#company").value.trim() || "חברת המעליות";
+
+  /* Manager */
+  function renderManager(flashId) {
+    const open = calls.filter((c) => c.status !== "done");
+    const urgent = open.filter((c) => c.stuck && c.status === "new").length;
+    const soon = Object.values(elevators).filter((e) => e.status !== "ok").length;
+    $("#kpis").innerHTML = [
+      ["קריאות פתוחות", open.length, ""],
+      ["חילוץ ממתין לשיבוץ", urgent, urgent ? "crit" : ""],
+      ["זמן הגעה ממוצע", "38 דק׳", ""],
+      ["בדיקות באיחור או החודש", soon, ""],
+    ].map(([l, n, c]) => `<div class="kpi ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+    $("#openCount").textContent = open.length + " פתוחות";
+    const order = { new: 0, assigned: 1, quote: 2, parts: 3, done: 4 };
+    const rows = [...calls].sort((a, b) => (b.stuck === true) - (a.stuck === true) || order[a.status] - order[b.status] || b.opened - a.opened);
+    $("#callRows").innerHTML = rows.map((c) => {
+      const e = elevators[c.el];
+      const assign = c.status === "new"
+        ? `<div class="assign"><select id="as-${c.id}" aria-label="טכנאי לקריאה ${c.id}">${techs.map((t) => `<option>${t.name}</option>`).join("")}</select><button class="btn primary" data-assign="${c.id}">שבץ</button></div>`
+        : `<span>${c.tech || "-"}</span>${c.eta ? `<div class="addr">צפי חלק ${c.eta}</div>` : ""}`;
+      return `<tr class="${c.stuck && c.status === "new" ? "is-crit" : ""} ${flashId === c.id ? "flash" : ""}">
+        <td class="mono">${c.id}</td>
+        <td><span class="mono">${c.el}</span><div class="addr">${e.addr}</div></td>
+        <td>${c.stuck ? "<strong>חילוץ: </strong>" : ""}${esc(c.issue)}</td>
+        <td class="mono">${age(c.opened)}</td>
+        <td>${pill(c.status)}</td>
+        <td>${assign}</td></tr>`;
+    }).join("");
+    $("#inspections").innerHTML = Object.entries(elevators).sort((a, b) => ({ late: 0, soon: 1, ok: 2 }[a[1].status] - { late: 0, soon: 1, ok: 2 }[b[1].status])).slice(0, 4).map(([id, e]) => {
+      const p = e.status === "late" ? '<span class="pill p-new">באיחור</span>' : e.status === "soon" ? '<span class="pill p-quote">החודש</span>' : '<span class="pill p-done">בזמן</span>';
+      return `<li><span><span class="mono">${id}</span> · ${e.addr}<div class="addr">בודק מוסמך: ${e.inspector}</div></span><span class="right"><span class="mono">${e.next}</span><br>${p}</span></li>`;
+    }).join("");
+    $("#repeats").innerHTML = Object.entries(history).map(([id, h]) => [id, h.filter((x) => !x.includes("תחזוקה")).length]).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).map(([id, n]) =>
+      `<li><span><span class="mono">${id}</span> · ${elevators[id].addr}</span><span class="right"><span class="pill ${n >= 3 ? "p-new" : "p-quote"}">${n} תקלות</span></span></li>`).join("");
+    $("#techList").innerHTML = techs.map((t) => {
+      const busy = calls.find((c) => c.tech === t.name && c.status === "assigned");
+      return `<li><span><span class="dot ${busy ? "busy" : "free"}"></span>${t.name}<div class="addr">${t.area}</div></span><span class="right addr">${busy ? "בקריאה " + busy.id : "פנוי"}</span></li>`;
+    }).join("");
+    $("#parts").innerHTML = parts.map((p) => `<li><span>${p.name}${p.note ? `<div class="addr">${p.note}</div>` : ""}</span><span class="right"><span class="mono">${p.qty} / ${p.min}</span></span></li>`).join("");
+  }
+
+  /* Committee */
+  function renderVaad() {
+    const mine = calls.filter((c) => c.el === "E-102");
+    const active = mine.find((c) => c.status !== "done");
+    const e = elevators["E-102"];
+    $("#vaadBoard").innerHTML = active
+      ? `<span class="small">מעלית E-102 · ${e.floors} קומות</span><span class="big">${STATUS[active.status][0]}</span><span class="small">קריאה ${active.id}: ${esc(active.issue)}${active.tech ? " · " + active.tech : ""}</span><span class="small">בדיקה חצי־שנתית הבאה: ${e.next}</span>`
+      : `<span class="small">מעלית E-102 · ${e.floors} קומות</span><span class="big">תקינה</span><span class="small">בדיקה חצי־שנתית הבאה: ${e.next}</span>`;
+    const q = mine.find((c) => c.status === "quote");
+    $("#vaadQuote").innerHTML = q ? `<div class="quote"><h3>הצעת מחיר לאישור · ${q.id}</h3><div class="sum">₪${q.quote.toLocaleString("he-IL")}</div><div style="font-size:.88rem">${esc(q.quoteWhy)}</div><button class="btn primary" data-approve="${q.id}">מאשר את ההצעה</button></div>` : "";
+    $("#vaadTimeline").innerHTML = [...mine].sort((a, b) => b.opened - a.opened).map((c) =>
+      `<li class="${c.status !== "done" ? "on" : ""}"><strong>${c.id}</strong> · ${esc(c.issue)}<br>${pill(c.status)} <time>${age(c.opened)}</time></li>`).join("") || '<li class="empty">אין קריאות</li>';
+    $("#smsLog").innerHTML = [...sms].reverse().map((m) => `<div class="bubble"><time>${fmtTime(m.t)} · ${esc(company())}</time>${esc(m.text)}</div>`).join("");
+  }
+
+  /* Technician */
+  function renderTech() {
+    const name = $("#techPick").value;
+    $("#techName").textContent = name;
+    const mine = calls.filter((c) => c.tech === name && c.status !== "done").sort((a, b) => order(a) - order(b));
+    function order(c) { return { assigned: 0, quote: 1, parts: 2 }[c.status] ?? 3; }
+    if (!mine.find((c) => c.id === selectedTask)) selectedTask = mine[0]?.id || null;
+    $("#techTasks").innerHTML = mine.length ? mine.map((c) => `<button class="task" aria-pressed="${c.id === selectedTask}" data-task="${c.id}">
+      <span class="row"><strong>${esc(c.issue)}</strong>${pill(c.status)}</span>
+      <span class="addr">${c.id} · ${elevators[c.el].addr}</span></button>`).join("")
+      : '<div class="empty">אין משימות פתוחות. שבצו קריאה מתצוגת המנהל.</div>';
+    const c = calls.find((x) => x.id === selectedTask);
+    if (!c) { $("#techDetail").innerHTML = ""; return; }
+    const e = elevators[c.el];
+    const canClose = c.status === "assigned";
+    $("#techDetail").innerHTML = `<div class="panel" style="padding:12px">
+      <div class="panel-head"><h3>${c.id} · ${e.addr}</h3><span class="mono addr">${c.el} · ${e.floors} קומות</span></div>
+      <div class="history"><strong>היסטוריה של המעלית</strong>${(history[c.el] || []).map((h) => `<span>${h}</span>`).join("")}</div>
+      ${canClose ? `
+      <div class="field"><label for="repWork">מה נעשה</label><textarea id="repWork">אותר ממסר תקול בלוח הפיקוד והוחלף. נבדקה נסיעה בכל הקומות.</textarea></div>
+      <div class="field"><label for="sig">חתימת הלקוח</label><canvas class="sig" id="sig" aria-label="שטח חתימה"></canvas></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" data-close="${c.id}">סיים קריאה ושלח דוח</button>
+        <button class="btn" data-parts="${c.id}">ממתין לחלק</button>
+      </div>` : `<div class="empty">הקריאה ${STATUS[c.status][0]}. אין פעולה נדרשת כרגע.</div>`}
+    </div>`;
+    if (canClose) setupSig();
+  }
+  function setupSig() {
+    const cv = $("#sig"); const r = cv.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+    cv.width = r.width * dpr; cv.height = r.height * dpr;
+    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = getComputedStyle(document.body).color;
+    let down = false;
+    const pt = (ev) => { const b = cv.getBoundingClientRect(); return [ev.clientX - b.left, ev.clientY - b.top]; };
+    cv.onpointerdown = (ev) => { down = true; cv.setPointerCapture(ev.pointerId); ctx.beginPath(); ctx.moveTo(...pt(ev)); };
+    cv.onpointermove = (ev) => { if (!down) return; ctx.lineTo(...pt(ev)); ctx.stroke(); signedTasks.add(selectedTask); };
+    cv.onpointerup = () => (down = false);
+  }
+
+  function renderAll(flashId) { renderManager(flashId); renderVaad(); renderTech(); }
+
+  /* Events */
+  document.querySelector(".seats").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-seat]"); if (!b) return;
+    showSeat(b.dataset.seat);
+  });
+  function showSeat(seat) {
+    document.querySelectorAll(".seats button").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.seat === seat)));
+    ["mgr", "vaad", "tech"].forEach((s) => ($("#seat-" + s).hidden = s !== seat));
+    if (seat === "tech") renderTech();
+  }
+  document.addEventListener("click", (ev) => {
+    const a = ev.target.closest("[data-assign]");
+    if (a) {
+      const c = calls.find((x) => x.id === a.dataset.assign);
+      c.tech = $("#as-" + c.id).value; c.status = "assigned";
+      addSms(c.el, `הטכנאי ${c.tech} בדרך אליכם, צפי הגעה 35 דק׳.`);
+      $("#techPick").value = c.tech; selectedTask = c.id;
+      renderAll(c.id); toast(`${c.id} שובצה ל${c.tech}. נשלח SMS לוועד.`); return;
+    }
+    const ap = ev.target.closest("[data-approve]");
+    if (ap) {
+      const c = calls.find((x) => x.id === ap.dataset.approve);
+      c.status = "assigned";
+      addSms(c.el, `ההצעה אושרה. הטכנאי ${c.tech} יגיע מחר בין 08:00 ל־10:00 להחלפת מנוע הדלת.`);
+      renderAll(c.id); toast("ההצעה אושרה. המנהל רואה את זה מיד."); return;
+    }
+    const t = ev.target.closest("[data-task]");
+    if (t) { selectedTask = t.dataset.task; renderTech(); return; }
+    const cl = ev.target.closest("[data-close]");
+    if (cl) {
+      if (!signedTasks.has(cl.dataset.close)) { toast("חסרה חתימת לקוח. חתמו בתיבה המקווקוות."); return; }
+      const c = calls.find((x) => x.id === cl.dataset.close);
+      c.status = "done";
+      history[c.el] = [`היום · ${c.issue} (טופל)`, ...(history[c.el] || [])];
+      addSms(c.el, `קריאה ${c.id} טופלה. דוח עבודה חתום נשמר במערכת.`);
+      renderAll(c.id); toast(`${c.id} נסגרה. הדוח נשמר והוועד עודכן.`); return;
+    }
+    const pa = ev.target.closest("[data-parts]");
+    if (pa) {
+      const c = calls.find((x) => x.id === pa.dataset.parts);
+      c.status = "parts"; c.eta = "08.10";
+      addSms(c.el, `המעלית ממתינה לחלק חילוף. צפי תיקון: 08.10. נעדכן כשיגיע.`);
+      renderAll(c.id); toast("סומן כממתין לחלק. הוועד קיבל צפי."); return;
+    }
+  });
+  $("#newCall").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const stuck = $("#ncStuck").checked;
+    const issue = $("#ncType").value + ($("#ncNote").value.trim() ? " · " + $("#ncNote").value.trim() : "");
+    const c = { id: "C-" + seq++, el: "E-102", issue: stuck ? "אדם תקוע בתא · " + issue : issue, stuck, opened: new Date(), status: "new", tech: null };
+    calls.push(c);
+    addSms("E-102", `קריאה ${c.id} נפתחה${stuck ? " כקריאת חילוץ דחופה" : ""}. נעדכן כשטכנאי ישובץ.`);
+    $("#ncNote").value = ""; $("#ncStuck").checked = false;
+    renderAll(c.id); toast(`קריאה ${c.id} נשלחה. היא כבר מופיעה אצל המנהל.`);
+  });
+  $("#techPick").innerHTML = techs.map((t) => `<option>${t.name}</option>`).join("");
+  $("#techPick").value = "אלון";
+  $("#techPick").addEventListener("change", () => { selectedTask = null; renderTech(); });
+
+  try { const saved = localStorage.getItem("demo-company"); if (saved) $("#company").value = saved; } catch (e) {}
+  $("#company").addEventListener("input", () => { try { localStorage.setItem("demo-company", $("#company").value); } catch (e) {} renderVaad(); });
+
+  // The LED in the logo counts floors, like the display in a car.
+  let floor = 8, dir = -1;
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(() => {
+    floor += dir; if (floor <= 0 || floor >= 12) dir *= -1;
+    $("#ledFloor").textContent = String(floor).padStart(2, "0");
+    document.querySelector(".led .arrow").textContent = dir > 0 ? "▲" : "▼";
+  }, 1400);
+
+  renderAll();
+})();
+</script>
