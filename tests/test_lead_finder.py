@@ -13,15 +13,15 @@ def place(pid, name, reviews=(), count=40, website="https://x.co.il"):
         "displayName": {"text": name},
         "userRatingCount": count,
         "websiteUri": website,
-        "reviews": [{"originalText": {"text": t}} for t in reviews],
+        "reviews": [{"rating": 1, "originalText": {"text": t}} for t in reviews],
     }
 
 
 class SignalsTest(unittest.TestCase):
     def test_review_complaints_only_coordination(self):
         hits = signals.review_complaints([
-            {"originalText": {"text": "הטכנאי לא הגיע ולא עדכנו אותי"}},
-            {"originalText": {"text": "עבודה מעולה, ממליץ"}},
+            {"rating": 1, "originalText": {"text": "הטכנאי לא הגיע ולא עדכנו אותי"}},
+            {"rating": 5, "originalText": {"text": "מאז הריסוס לא הגיעו אלינו ג׳וקים, ממליץ"}},
         ])
         self.assertEqual(len(hits), 1)
 
@@ -30,6 +30,7 @@ class SignalsTest(unittest.TestCase):
         self.assertFalse(signals.website_signals("דרושה הדברה? התקשרו עכשיו")["hiring_on_site"])
         self.assertFalse(signals.is_service_business({"primaryTypeDisplayName": {"text": "חנות למוצרי בניין"}}))
         self.assertTrue(signals.is_service_business({"primaryTypeDisplayName": {"text": "מנעולן"}}))
+        self.assertFalse(signals.is_service_business({"primaryTypeDisplayName": {"text": "גלידריה"}}))
         s = signals.website_signals(html)
         self.assertEqual(set(s["manual"]), {"pdf_form", "whatsapp_contact", "call_to_schedule"})
         self.assertTrue(s["hiring_on_site"])

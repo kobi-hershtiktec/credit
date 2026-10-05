@@ -49,15 +49,28 @@ SCORED_MANUAL = {"pdf_form", "call_to_schedule"}
 NON_SERVICE_TYPES = ["חנות", "יצרן", "סיטונאי", "ספקים", "כלי רכב", "חווה", "משתלה", "גן ילדים", "כנסייה"]
 
 
+# Google place types that are field-service businesses (substring match).
+SERVICE_TYPES = ["שירות", "מנעולן", "קבלן", "שרברב", "חשמלאי", "הובל", "משלוח", "מעליות", "הדברה",
+                 "ניקיון", "גינון", "גנן", "מיזוג", "תיקון", "אבטחה", "טכנאי", "לוגיסטיקה", "אינסטלטור"]
+
+
 def is_service_business(place: dict) -> bool:
     t = (place.get("primaryTypeDisplayName") or {}).get("text", "")
-    return not any(w in t for w in NON_SERVICE_TYPES)
+    if any(w in t for w in NON_SERVICE_TYPES):
+        return False
+    return not t or any(w in t for w in SERVICE_TYPES)
 
 
 def review_complaints(reviews: list[dict]) -> list[str]:
-    """Return the review snippets that contain a coordination complaint."""
+    """Return the review snippets that contain a coordination complaint.
+
+    Only low-rated reviews count: in happy reviews the same phrases show up
+    as praise ("the cockroaches did not come back").
+    """
     hits = []
     for r in reviews:
+        if r.get("rating", 5) > 3:
+            continue
         text = (r.get("originalText") or r.get("text") or {}).get("text", "")
         if any(p in text for p in COORDINATION_COMPLAINTS):
             hits.append(text[:200])
