@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f766e">
+<title>דירות באגמים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3f5f4;
+    --card: #ffffff;
+    --text: #17201d;
+    --muted: #5d6b66;
+    --line: #dfe5e2;
+    --accent: #0f766e;
+    --accent-ink: #ffffff;
+    --s-none: #94a3b8;
+    --s-back: #d97706;
+    --s-good: #16a34a;
+    --s-bad: #dc2626;
+    --s-sold: #6b21a8;
+    --warn-bg: #fef3c7;
+    --warn-ink: #78350f;
+    --err-bg: #fee2e2;
+    --err-ink: #7f1d1d;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  a { color: var(--accent); }
+
+  header.top {
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 14px 16px 12px;
+  }
+  header.top h1 { margin: 0; font-size: 1.3rem; font-weight: 800; }
+  header.top p { margin: 2px 0 0; opacity: .9; font-size: .95rem; }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(243,245,244,.97);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px 8px;
+  }
+  .bar-inner, main, footer, .banner { max-width: 760px; margin-inline: auto; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: .92rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip[aria-pressed="true"] { background: var(--text); color: #fff; border-color: var(--text); }
+  .bar-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .count { font-weight: 700; color: var(--muted); font-size: .95rem; }
+  .btn-add {
+    border: 0; background: var(--accent); color: #fff; font-weight: 700;
+    border-radius: 10px; padding: 8px 14px; cursor: pointer;
+  }
+
+  .banner {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .banner.show { display: block; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .banner.err { background: var(--err-bg); color: var(--err-ink); }
+
+  main { padding: 12px 16px 8px; display: grid; gap: 12px; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    border-inline-start: 7px solid var(--s-none);
+    padding: 14px 14px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .card[data-status="לחזור אליו"] { border-inline-start-color: var(--s-back); }
+  .card[data-status="מתאים"] { border-inline-start-color: var(--s-good); }
+  .card[data-status="לא מתאים"] { border-inline-start-color: var(--s-bad); }
+  .card[data-status="נמכרה"] { border-inline-start-color: var(--s-sold); }
+  .card[data-status="לא מתאים"] .head, .card[data-status="נמכרה"] .head { opacity: .7; }
+
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .addr { margin: 0; font-size: 1.15rem; font-weight: 800; }
+  .price { text-align: start; white-space: nowrap; }
+  .price b { font-size: 1.2rem; font-weight: 800; display: block; }
+  .price s { color: var(--muted); font-size: .9rem; }
+  .facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 4px; color: var(--text); font-size: .97rem; }
+  .facts span { white-space: nowrap; }
+  .meta { color: var(--muted); font-size: .9rem; }
+  .note {
+    margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
+    background: #f6f8f7; font-size: .95rem;
+  }
+  .btn-link {
+    display: block; margin-top: 10px; text-align: center; text-decoration: none;
+    background: var(--text); color: #fff; font-weight: 700; font-size: 1.05rem;
+    padding: 11px; border-radius: 10px;
+  }
+
+  .statuses { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 12px; }
+  .st {
+    border: 1px solid var(--line); background: #fff; border-radius: 9px;
+    padding: 8px 2px; font-size: .85rem; font-weight: 700; cursor: pointer; line-height: 1.15;
+  }
+  .st[aria-pressed="true"] { color: #fff; border-color: transparent; }
+  .st[data-v="לא נבדק"][aria-pressed="true"] { background: var(--s-none); }
+  .st[data-v="לחזור אליו"][aria-pressed="true"] { background: var(--s-back); }
+  .st[data-v="מתאים"][aria-pressed="true"] { background: var(--s-good); }
+  .st[data-v="לא מתאים"][aria-pressed="true"] { background: var(--s-bad); }
+  .st[data-v="נמכרה"][aria-pressed="true"] { background: var(--s-sold); }
+
+  .fields { display: grid; gap: 10px; margin-top: 12px; }
+  .field label { display: flex; justify-content: space-between; font-weight: 700; font-size: .92rem; margin-bottom: 4px; }
+  .saved { font-weight: 600; color: var(--muted); font-size: .82rem; }
+  .saved.ok { color: var(--s-good); }
+  .saved.bad { color: var(--s-bad); }
+  .field input, .field textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 9px;
+    padding: 9px 10px; background: #fff; font-size: 16px;
+  }
+  .field textarea { min-height: 76px; resize: vertical; }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .who { display: flex; gap: 6px; }
+  .who .chip { padding: 8px 14px; }
+  .who input { flex: 1; min-width: 0; }
+  .tels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tels a {
+    text-decoration: none; background: #e7f5ef; color: #14532d; font-weight: 700;
+    padding: 6px 10px; border-radius: 8px; direction: ltr;
+  }
+
+  footer { padding: 6px 16px 40px; color: var(--muted); font-size: .9rem; }
+  footer p { margin: 0; padding: 12px; border-top: 1px solid var(--line); }
+
+  dialog {
+    border: 0; border-radius: 16px; padding: 0; width: min(520px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog form { padding: 16px; display: grid; gap: 10px; }
+  dialog h2 { margin: 0; font-size: 1.2rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions { display: flex; gap: 8px; justify-content: flex-start; margin-top: 4px; }
+  .actions button { border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+  .actions .ok { border: 0; background: var(--accent); color: #fff; }
+  .actions .cancel { border: 1px solid var(--line); background: #fff; }
+  .form-err { color: var(--s-bad); font-weight: 600; min-height: 1em; margin: 0; }
+
+  .nokey { max-width: 520px; margin: 40px auto; padding: 0 16px; text-align: center; }
+
+  @media (min-width: 700px) {
+    header.top { padding: 18px 16px 14px; }
+    header.top > div { max-width: 760px; margin-inline: auto; }
+    .fields { grid-template-columns: 1fr 1fr; }
+    .fields .field.wide { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>דירות למכירה באגמים, אשקלון</h1>
+    <p>4 חדרים, 1.6–1.7 מיליון ₪ (עד 1.8 למיקוח)</p>
+  </div>
+</header>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-inner">
+    <div class="chips" id="priceFilter" role="group" aria-label="סינון לפי מחיר">
+      <button class="chip" data-v="all" aria-pressed="true">כל המחירים</button>
+      <button class="chip" data-v="upto17" aria-pressed="false">עד 1.7 מיליון</button>
+      <button class="chip" data-v="17to18" aria-pressed="false">1.7–1.8 (למיקוח)</button>
+    </div>
+    <div class="chips" id="statusFilter" role="group" aria-label="סינון לפי סטטוס">
+      <button class="chip" data-v="all" aria-pressed="true">כל הסטטוסים</button>
+    </div>
+    <div class="bar-foot">
+      <span class="count" id="count">טוען…</span>
+      <button class="btn-add" id="addBtn" type="button">+ הוסף דירה</button>
+    </div>
+    <div class="banner warn" id="offline">אין חיבור לאינטרנט. מה שתכתבו יישמר אוטומטית כשהחיבור יחזור.</div>
+    <div class="banner err" id="error"></div>
+  </div>
+</div>
+
+<main id="list"></main>
+
+<footer id="foot" hidden>
+  <p>ממוצע עסקאות 4 חדרים באגמים מתחילת 2026: כ-1.65 מיליון; מוכרים מבקשים בממוצע כ-100 אלף מעל (ביזפורטל, 21.8.2026). ביד2 האזור מופיע כ'שקמים ואגמים' — לוודא בשיחה שהכתובת באגמים.</p>
+</footer>
+
+<div class="nokey" id="nokey" hidden>
+  <h2>הקישור לא שלם</h2>
+  <p>חסר המפתח שבסוף הקישור (החלק שאחרי הסימן #). בקשו שוב את הקישור המלא והעתיקו אותו בשלמותו.</p>
+</div>
+
+<dialog id="addDlg">
+  <form id="addForm" method="dialog" novalidate>
+    <h2>הוספת דירה</h2>
+    <div class="field"><label for="fAddress">כתובת</label><input id="fAddress" required maxlength="200" autocomplete="off"></div>
+    <div class="grid2">
+      <div class="field"><label for="fPrice">מחיר (₪)</label><input id="fPrice" inputmode="numeric" required placeholder="1,650,000"></div>
+      <div class="field"><label for="fRooms">חדרים</label><input id="fRooms" inputmode="decimal" placeholder="4"></div>
+      <div class="field"><label for="fFloor">קומה</label><input id="fFloor" maxlength="30" placeholder="3 מתוך 8"></div>
+      <div class="field"><label for="fSqm">מ"ר</label><input id="fSqm" inputmode="numeric" placeholder="115"></div>
+    </div>
+    <div class="field"><label for="fUrl">קישור למודעה</label><input id="fUrl" type="url" inputmode="url" maxlength="1000" dir="ltr" placeholder="https://"></div>
+    <div class="field"><label for="fNote">הערה</label><textarea id="fNote" maxlength="500"></textarea></div>
+    <p class="form-err" id="formErr"></p>
+    <div class="actions">
+      <button class="ok" type="submit" id="addSave">הוסף</button>
+      <button class="cancel" type="button" id="addCancel">ביטול</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, collection, doc, onSnapshot, updateDoc, setDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  "apiKey": "AIzaSyDDwwh_6xnFV8gloTCZ1pQLhpXyCUjUqfE",
+  "authDomain": "agamim-apartments.firebaseapp.com",
+  "projectId": "agamim-apartments",
+  "storageBucket": "agamim-apartments.firebasestorage.app",
+  "messagingSenderId": "904327158349",
+  "appId": "1:904327158349:web:845920569bf95be3e41a04"
+};
+
+const STATUSES = ["לא נבדק", "לחזור אליו", "מתאים", "לא מתאים", "נמכרה"];
+const WHO = ["כובי", "היא"];
+const SAVE_DELAY = 600;
+
+const boardId = decodeURIComponent(location.hash.slice(1)).trim();
+const $ = (id) => document.getElementById(id);
+
+if (!/^[A-Za-z0-9]{20,64}$/.test(boardId)) {
+  $("nokey").hidden = false;
+  throw new Error("missing board key");
+}
+$("bar").hidden = false;
+$("foot").hidden = false;
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const col = collection(db, "boards", boardId, "apartments");
+
+const fmt = (n) => Number(n).toLocaleString("he-IL");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// ----- banners -----
+function setOffline() { $("offline").classList.toggle("show", !navigator.onLine); }
+addEventListener("online", setOffline);
+addEventListener("offline", setOffline);
+setOffline();
+let errTimer;
+function showError(msg) {
+  const el = $("error");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(errTimer);
+  errTimer = setTimeout(() => el.classList.remove("show"), 10000);
+}
+
+// ----- filters (remembered on this device only) -----
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const filters = { price: store.get("agamim.price") || "all", status: store.get("agamim.status") || "all" };
+for (const s of STATUSES) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.dataset.v = s; b.textContent = s; b.setAttribute("aria-pressed", "false");
+  $("statusFilter").append(b);
+}
+function bindChips(groupId, key) {
+  const group = $(groupId);
+  const sync = () => group.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.v === filters[key])));
+  if (![...group.children].some((c) => c.dataset.v === filters[key])) filters[key] = "all";
+  sync();
+  group.addEventListener("click", (e) => {
+    const c = e.target.closest(".chip");
+    if (!c) return;
+    filters[key] = c.dataset.v;
+    store.set("agamim." + key, filters[key]);
+    sync();
+    render();
+  });
+}
+bindChips("priceFilter", "price");
+bindChips("statusFilter", "status");
+
+function passes(a) {
+  const p = Number(a.price) || 0;
+  if (filters.price === "upto17" && p > 1700000) return false;
+  if (filters.price === "17to18" && (p <= 1700000 || p > 1800000)) return false;
+  if (filters.status !== "all" && (a.status || "לא נבדק") !== filters.status) return false;
+  return true;
+}
+
+// ----- data & cards -----
+const apts = new Map();   // id -> data
+const cards = new Map();  // id -> { el, refs, dirty:Set }
+let loaded = false;
+
+function phoneLinks(text) {
+  const out = [];
+  const re = /(?:\+?972[\s-]?|0)(?:\d[\s-]?){7,9}\d/g;
+  for (const m of String(text || "").matchAll(re)) {
+    const raw = m[0].trim();
+    let digits = raw.replace(/[^\d+]/g, "");
+    if (digits.startsWith("+972")) digits = "0" + digits.slice(4);
+    else if (digits.startsWith("972")) digits = "0" + digits.slice(3);
+    if (digits.length < 9 || digits.length > 10) continue;
+    out.push({ label: raw, href: "tel:" + digits });
+  }
+  return out;
+}
+
+function buildCard(id) {
+  const el = document.createElement("article");
+  el.className = "card";
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="head">
+      <h2 class="addr" data-r="addr"></h2>
+      <div class="price" data-r="price"></div>
+    </div>
+    <div class="facts" data-r="facts"></div>
+    <div class="meta" data-r="meta"></div>
+    <p class="note" data-r="note"></p>
+    <a class="btn-link" data-r="link" target="_blank" rel="noopener noreferrer">למודעה ↗</a>
+    <div class="statuses" role="group" aria-label="סטטוס">
+      ${STATUSES.map((s) => `<button class="st" type="button" data-v="${s}" aria-pressed="false">${s}</button>`).join("")}
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label>מי בדק <span class="saved" data-s="checkedBy"></span></label>
+        <div class="who">
+          ${WHO.map((w) => `<button class="chip" type="button" data-who="${w}" aria-pressed="false">${w}</button>`).join("")}
+          <input data-f="checkedBy" maxlength="50" placeholder="או שם אחר" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label>איש קשר / טלפון <span class="saved" data-s="contact"></span></label>
+        <input data-f="contact" maxlength="2000" inputmode="text" autocomplete="off" placeholder="שם ומספר טלפון">
+        <div class="tels" data-r="tels"></div>
+      </div>
+      <div class="field wide">
+        <label>הערות מהשיחה <span class="saved" data-s="notes"></span></label>
+        <textarea data-f="notes" maxlength="2000" placeholder="מה המוכר אמר, גמישות במחיר, מתי אפשר לראות…"></textarea>
+      </div>
+    </div>`;
+  const refs = {};
+  el.querySelectorAll("[data-r]").forEach((n) => (refs[n.dataset.r] = n));
+  const inputs = {};
+  el.querySelectorAll("[data-f]").forEach((n) => (inputs[n.dataset.f] = n));
+  const saved = {};
+  el.querySelectorAll("[data-s]").forEach((n) => (saved[n.dataset.s] = n));
+  const card = { el, refs, inputs, saved, timers: {}, dirty: new Set() };
+
+  el.querySelector(".statuses").addEventListener("click", (e) => {
+    const b = e.target.closest(".st");
+    if (!b) return;
+    const prev = apts.get(id)?.status;
+    paintStatus(card, b.dataset.v);
+    save(id, "status", b.dataset.v, null).catch(() => paintStatus(card, prev));
+  });
+  el.querySelector(".who").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-who]");
+    if (!b) return;
+    const cur = inputs.checkedBy.value.trim();
+    const v = cur === b.dataset.who ? "" : b.dataset.who;
+    inputs.checkedBy.value = v;
+    paintWho(card, v);
+    clearTimeout(card.timers.checkedBy);
+    card.dirty.add("checkedBy");
+    save(id, "checkedBy", v, card).finally(() => card.dirty.delete("checkedBy"));
+  });
+  for (const [f, input] of Object.entries(inputs)) {
+    input.addEventListener("input", () => {
+      card.dirty.add(f);
+      setSaved(card, f, "…", "");
+      if (f === "contact") paintTels(card, input.value);
+      if (f === "checkedBy") paintWho(card, input.value);
+      clearTimeout(card.timers[f]);
+      card.timers[f] = setTimeout(() => flush(id, card, f), SAVE_DELAY);
+    });
+    input.addEventListener("blur", () => {
+      if (card.timers[f]) { clearTimeout(card.timers[f]); flush(id, card, f); }
+    });
+  }
+  return card;
+}
+
+function flush(id, card, f) {
+  card.timers[f] = null;
+  const v = card.inputs[f].value;
+  save(id, f, v, card).finally(() => {
+    // still typing something newer? keep it marked dirty
+    if (!card.timers[f]) card.dirty.delete(f);
+  });
+}
+
+function setSaved(card, f, text, cls) {
+  const n = card?.saved?.[f];
+  if (!n) return;
+  n.textContent = text;
+  n.className = "saved " + cls;
+  clearTimeout(n._t);
+  if (cls === "ok") n._t = setTimeout(() => { n.textContent = ""; }, 2500);
+}
+
+async function save(id, field, value, card) {
+  setSaved(card, field, navigator.onLine ? "שומר…" : "ממתין לחיבור…", "");
+  try {
+    await updateDoc(doc(col, id), { [field]: value, updatedAt: serverTimestamp() });
+    setSaved(card, field, "נשמר ✓", "ok");
+  } catch (err) {
+    console.error(err);
+    setSaved(card, field, "לא נשמר", "bad");
+    showError(err?.code === "permission-denied"
+      ? "השמירה נדחתה (ייתכן שהטקסט ארוך מדי). נסו שוב."
+      : "השמירה נכשלה. בדקו את החיבור לאינטרנט ונסו שוב.");
+    throw err;
+  }
+}
+
+function paintStatus(card, status) {
+  const s = STATUSES.includes(status) ? status : "לא נבדק";
+  card.el.dataset.status = s;
+  card.el.querySelectorAll(".st").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === s)));
+}
+function paintWho(card, v) {
+  card.el.querySelectorAll("[data-who]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.who === v.trim())));
+}
+function paintTels(card, text) {
+  card.refs.tels.innerHTML = phoneLinks(text)
+    .map((p) => `<a href="${esc(p.href)}">📞 ${esc(p.label)}</a>`).join("");
+}
+
+function fillCard(card, a) {
+  const r = card.refs;
+  r.addr.textContent = a.address || "ללא כתובת";
+  r.price.innerHTML = (a.price ? `<b>₪${fmt(a.price)}</b>` : "") + (a.prevPrice ? `<s>₪${fmt(a.prevPrice)}</s>` : "");
+  const facts = [];
+  if (a.rooms) facts.push(`${a.rooms} חד'`);
+  if (a.floor) facts.push(`קומה ${a.floor}`);
+  if (a.sqm) facts.push(`${a.sqm} מ"ר`);
+  if (a.price && a.sqm) facts.push(`₪${fmt(Math.round(a.price / a.sqm))} למ"ר`);
+  r.facts.innerHTML = facts.map((f) => `<span>${esc(f)}</span>`).join("");
+  r.meta.textContent = [a.source, a.publisher].filter(Boolean).join(" · ");
+  r.meta.hidden = !r.meta.textContent;
+  r.note.textContent = a.listingNote || "";
+  r.note.hidden = !a.listingNote;
+  if (a.url && /^https?:\/\//i.test(a.url)) { r.link.href = a.url; r.link.hidden = false; }
+  else r.link.hidden = true;
+
+  paintStatus(card, a.status);
+  // never overwrite a field the user is typing in right now
+  for (const [f, input] of Object.entries(card.inputs)) {
+    if (document.activeElement === input || card.dirty.has(f)) continue;
+    const v = a[f] ?? "";
+    if (input.value !== v) input.value = v;
+  }
+  paintWho(card, card.inputs.checkedBy.value);
+  paintTels(card, card.inputs.contact.value);
+}
+
+function render() {
+  const sorted = [...apts.entries()].sort((x, y) => (x[1].price || 0) - (y[1].price || 0) || String(x[1].address).localeCompare(String(y[1].address), "he"));
+  const list = $("list");
+  let shown = 0, prev = null;
+  for (const [id, a] of sorted) {
+    let card = cards.get(id);
+    if (!card) { card = buildCard(id); cards.set(id, card); }
+    fillCard(card, a);
+    const show = passes(a);
+    card.el.hidden = !show;
+    if (show) shown++;
+    // keep DOM order = price order without touching nodes already in place
+    const want = prev ? prev.nextSibling : list.firstChild;
+    if (want !== card.el) list.insertBefore(card.el, want);
+    prev = card.el;
+  }
+  for (const [id, card] of cards) if (!apts.has(id)) { card.el.remove(); cards.delete(id); }
+  let empty = list.querySelector(".empty");
+  if (!empty) { empty = document.createElement("p"); empty.className = "empty"; list.append(empty); }
+  empty.textContent = !loaded ? "טוען דירות…" : apts.size === 0 ? "אין עדיין דירות בלוח הזה." : "אין דירות שמתאימות לסינון.";
+  empty.hidden = loaded && shown > 0;
+  if (empty !== list.lastChild) list.append(empty);
+  $("count").textContent = loaded ? `${shown} מתוך ${apts.size} דירות` : "טוען…";
+}
+render();
+
+onSnapshot(col, (snap) => {
+  loaded = true;
+  for (const ch of snap.docChanges()) {
+    if (ch.type === "removed") apts.delete(ch.doc.id);
+    else apts.set(ch.doc.id, ch.doc.data());
+  }
+  $("error").classList.remove("show");
+  render();
+}, (err) => {
+  console.error(err);
+  showError("לא הצלחנו לטעון את הדירות. בדקו שהקישור מלא ושיש חיבור לאינטרנט, ורעננו את הדף.");
+});
+
+// ----- add apartment -----
+const dlg = $("addDlg");
+const num = (s) => {
+  const t = String(s).replace(/[^\d.]/g, "");
+  return t === "" ? null : Number(t);
+};
+$("addBtn").addEventListener("click", () => {
+  $("addForm").reset();
+  $("formErr").textContent = "";
+  dlg.showModal();
+});
+$("addCancel").addEventListener("click", () => dlg.close());
+$("addForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const address = $("fAddress").value.trim();
+  const price = num($("fPrice").value);
+  const rooms = num($("fRooms").value);
+  const sqm = num($("fSqm").value);
+  let url = $("fUrl").value.trim();
+  if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  if (!address) return ($("formErr").textContent = "צריך למלא כתובת.");
+  if (!price || price < 10000 || price > 100000000) return ($("formErr").textContent = "צריך למלא מחיר תקין.");
+  if (rooms !== null && !(rooms > 0 && rooms <= 20)) return ($("formErr").textContent = "מספר החדרים לא תקין.");
+  if (sqm !== null && !(sqm > 0 && sqm <= 2000)) return ($("formErr").textContent = 'מספר המ"ר לא תקין.');
+  const ref = doc(col);
+  const data = {
+    id: ref.id, address, rooms, floor: $("fFloor").value.trim(), sqm, price, prevPrice: null,
+    source: "נוסף ידנית", publisher: "", url, listingNote: $("fNote").value.trim(),
+    status: "לא נבדק", checkedBy: "", contact: "", notes: "", updatedAt: serverTimestamp(),
+  };
+  $("addSave").disabled = true;
+  $("formErr").textContent = navigator.onLine ? "" : "אין חיבור. הדירה תתווסף כשהחיבור יחזור.";
+  const pending = setDoc(ref, data);
+  dlg.close();
+  try { await pending; }
+  catch (err) { console.error(err); showError("הוספת הדירה נכשלה. בדקו את הפרטים ונסו שוב."); }
+  finally { $("addSave").disabled = false; }
+});
+</script>
+</body>
+</html>

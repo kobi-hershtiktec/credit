@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only boards/{boardId}/apartments/{id} is reachable. The board id is a long
+    // random key shared in the site link; everything else stays closed.
+    match /boards/{boardId}/apartments/{id} {
+
+      function validBoard() {
+        return boardId.size() >= 20 && boardId.size() <= 64;
+      }
+
+      function validStatus(s) {
+        return s in ['לא נבדק', 'לחזור אליו', 'מתאים', 'לא מתאים', 'נמכרה'];
+      }
+
+      function validTracking(d) {
+        return validStatus(d.status)
+          && d.checkedBy is string && d.checkedBy.size() <= 50
+          && d.contact is string && d.contact.size() <= 2000
+          && d.notes is string && d.notes.size() <= 2000;
+      }
+
+      function numOrNull(v, max) {
+        return v == null || ((v is int || v is float) && v > 0 && v <= max);
+      }
+
+      allow get, list: if validBoard();
+
+      // Listing fields are set once; the site may only change the tracking fields.
+      allow update: if validBoard()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
+        && validTracking(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      // "Add apartment" form: exactly these fields, with type checks.
+      allow create: if validBoard()
+        && request.resource.data.keys().hasOnly([
+             'id', 'address', 'rooms', 'floor', 'sqm', 'price', 'prevPrice', 'source',
+             'publisher', 'url', 'listingNote', 'status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
+        && request.resource.data.keys().hasAll([
+             'id', 'address', 'rooms', 'floor', 'sqm', 'price', 'prevPrice', 'source',
+             'publisher', 'url', 'listingNote', 'status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
+        && request.resource.data.id == id
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 200
+        && numOrNull(request.resource.data.rooms, 20)
+        && request.resource.data.floor is string && request.resource.data.floor.size() <= 30
+        && numOrNull(request.resource.data.sqm, 2000)
+        && (request.resource.data.price is int || request.resource.data.price is float)
+        && request.resource.data.price >= 10000 && request.resource.data.price <= 100000000
+        && request.resource.data.prevPrice == null
+        && request.resource.data.source is string && request.resource.data.source.size() <= 50
+        && request.resource.data.publisher is string && request.resource.data.publisher.size() <= 50
+        && request.resource.data.url is string && request.resource.data.url.size() <= 1000
+        && (request.resource.data.url == '' || request.resource.data.url.matches('https?://.*'))
+        && request.resource.data.listingNote is string && request.resource.data.listingNote.size() <= 500
+        && validTracking(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

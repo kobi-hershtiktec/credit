@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "site": "agamim-apartments",
+    "public": "public",
+    "headers": [
+      { "source": "**", "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "X-Robots-Tag", "value": "noindex" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ] }
+    ]
+  },
+  "firestore": { "rules": "firestore.rules" }
+}
