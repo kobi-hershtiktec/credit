@@ -18,7 +18,8 @@ service cloud.firestore {
         return validStatus(d.status)
           && d.checkedBy is string && d.checkedBy.size() <= 50
           && d.contact is string && d.contact.size() <= 2000
-          && d.notes is string && d.notes.size() <= 2000;
+          && d.notes is string && d.notes.size() <= 2000
+          && d.get('visitNotes', '') is string && d.get('visitNotes', '').size() <= 2000;
       }
 
       function numOrNull(v, max) {
@@ -30,7 +31,7 @@ service cloud.firestore {
       // Listing fields are set once; the site may only change the tracking fields.
       allow update: if validBoard()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
+             .hasOnly(['status', 'checkedBy', 'contact', 'notes', 'visitNotes', 'updatedAt'])
         && validTracking(request.resource.data)
         && request.resource.data.updatedAt == request.time;
 
@@ -38,7 +39,8 @@ service cloud.firestore {
       allow create: if validBoard()
         && request.resource.data.keys().hasOnly([
              'id', 'address', 'rooms', 'floor', 'sqm', 'price', 'prevPrice', 'source',
-             'publisher', 'url', 'listingNote', 'status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
+             'publisher', 'url', 'listingNote', 'status', 'checkedBy', 'contact', 'notes', 'visitNotes',
+             'updatedAt'])
         && request.resource.data.keys().hasAll([
              'id', 'address', 'rooms', 'floor', 'sqm', 'price', 'prevPrice', 'source',
              'publisher', 'url', 'listingNote', 'status', 'checkedBy', 'contact', 'notes', 'updatedAt'])
@@ -58,6 +60,19 @@ service cloud.firestore {
         && request.resource.data.listingNote is string && request.resource.data.listingNote.size() <= 500
         && validTracking(request.resource.data)
         && request.resource.data.updatedAt == request.time;
+
+      // Visit photos: small JPEGs (compressed in the browser) stored inline.
+      match /photos/{photoId} {
+        allow get, list: if validBoard();
+        allow create: if validBoard()
+          && exists(/databases/$(database)/documents/boards/$(boardId)/apartments/$(id))
+          && request.resource.data.keys().hasOnly(['data', 'createdAt'])
+          && request.resource.data.data is string
+          && request.resource.data.data.size() <= 900000
+          && request.resource.data.data.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')
+          && request.resource.data.createdAt == request.time;
+        allow delete: if validBoard();
+      }
     }
 
     match /{document=**} {

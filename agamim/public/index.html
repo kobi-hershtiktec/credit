@@ -160,6 +160,22 @@
     padding: 6px 10px; border-radius: 8px; direction: ltr;
   }
 
+  .visit { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 10px; }
+  .visit h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+  .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+  .photos:empty { display: none; }
+  .thumb { padding: 0; border: 0; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: #e5e7eb; cursor: zoom-in; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .btn-photo {
+    display: flex !important; justify-content: center !important; margin: 6px 0 0 !important;
+    border: 1px dashed var(--accent); color: var(--accent); background: #f0faf8;
+    border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer;
+  }
+  dialog.viewer { width: min(900px, calc(100vw - 16px)); padding: 8px; background: #111; }
+  dialog.viewer img { display: block; max-width: 100%; max-height: calc(100dvh - 110px); margin: 0 auto; border-radius: 8px; }
+  dialog.viewer .actions { justify-content: space-between; padding: 8px 2px 2px; }
+  .actions .del { border: 0; background: var(--s-bad); color: #fff; }
+
   footer { padding: 6px 16px 40px; color: var(--muted); font-size: .9rem; }
   footer p { margin: 0; padding: 12px; border-top: 1px solid var(--line); }
 
@@ -245,10 +261,18 @@
   </form>
 </dialog>
 
+<dialog id="photoDlg" class="viewer">
+  <img id="photoImg" alt="">
+  <div class="actions">
+    <button class="cancel" type="button" id="photoClose">סגור</button>
+    <button class="del" type="button" id="photoDelete">מחק תמונה</button>
+  </div>
+</dialog>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, onSnapshot, updateDoc, setDoc, serverTimestamp
+  getFirestore, collection, doc, onSnapshot, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -261,7 +285,7 @@ const firebaseConfig = {
 };
 
 const STATUSES = ["לא נבדק", "לחזור אליו", "מתאים", "לא מתאים", "נמכרה"];
-const WHO = ["כובי", "היא"];
+const WHO = ["קובי", "מעיין"];
 const SAVE_DELAY = 600;
 
 const boardId = decodeURIComponent(location.hash.slice(1)).trim();
@@ -382,6 +406,18 @@ function buildCard(id) {
         <label>הערות מהשיחה <span class="saved" data-s="notes"></span></label>
         <textarea data-f="notes" maxlength="2000" placeholder="מה המוכר אמר, גמישות במחיר, מתי אפשר לראות…"></textarea>
       </div>
+    </div>
+    <div class="visit">
+      <h3>אחרי הביקור</h3>
+      <div class="field">
+        <label>הערות מהביקור <span class="saved" data-s="visitNotes"></span></label>
+        <textarea data-f="visitNotes" maxlength="2000" placeholder="מצב הדירה, נוף, חניה, מה אהבנו ומה פחות…"></textarea>
+      </div>
+      <div class="field">
+        <label>תמונות <span class="saved" data-r="photoStatus"></span></label>
+        <div class="photos" data-r="photos"></div>
+        <label class="btn-photo">📷 הוסף תמונות<input type="file" accept="image/*" multiple data-r="file" hidden></label>
+      </div>
     </div>`;
   const refs = {};
   el.querySelectorAll("[data-r]").forEach((n) => (refs[n.dataset.r] = n));
@@ -390,6 +426,16 @@ function buildCard(id) {
   const saved = {};
   el.querySelectorAll("[data-s]").forEach((n) => (saved[n.dataset.s] = n));
   const card = { el, refs, inputs, saved, timers: {}, dirty: new Set() };
+  saved.photos = refs.photoStatus;
+  refs.file.addEventListener("change", () => { uploadPhotos(id, card, [...refs.file.files]); refs.file.value = ""; });
+  refs.photos.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-pid]");
+    if (t) openPhoto(id, t.dataset.pid, t.querySelector("img").src);
+  });
+  const photosCol = collection(db, "boards", boardId, "apartments", id, "photos");
+  card.unsubPhotos = onSnapshot(query(photosCol, orderBy("createdAt")), (snap) => {
+    refs.photos.innerHTML = snap.docs.map((d) => `<button type="button" class="thumb" data-pid="${esc(d.id)}" aria-label="הגדל תמונה"><img alt="" loading="lazy" src="${esc(d.data().data)}"></button>`).join("");
+  }, (err) => console.error(err));
 
   el.querySelector(".statuses").addEventListener("click", (e) => {
     const b = e.target.closest(".st");
@@ -499,6 +545,56 @@ function fillCard(card, a) {
   paintTels(card, card.inputs.contact.value);
 }
 
+// ----- photos: compressed on the device and stored as small JPEGs in Firestore -----
+async function compress(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  let max = 1600, q = 0.78, out = "";
+  for (let i = 0; i < 6; i++) {
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    out = c.toDataURL("image/jpeg", q);
+    if (out.length <= 700000) break;
+    max = Math.round(max * 0.8); q = Math.max(0.5, q - 0.08);
+  }
+  bmp.close?.();
+  return out;
+}
+async function uploadPhotos(id, card, files) {
+  const imgs = files.filter((f) => f.type.startsWith("image/"));
+  const photosCol = collection(db, "boards", boardId, "apartments", id, "photos");
+  for (let i = 0; i < imgs.length; i++) {
+    setSaved(card, "photos", `מעלה ${i + 1}/${imgs.length}…`, "");
+    try {
+      const data = await compress(imgs[i]);
+      await addDoc(photosCol, { data, createdAt: serverTimestamp() });
+    } catch (err) {
+      console.error(err);
+      setSaved(card, "photos", "לא נשמר", "bad");
+      showError("העלאת התמונה נכשלה. בדקו את החיבור לאינטרנט ונסו שוב.");
+      return;
+    }
+  }
+  if (imgs.length) setSaved(card, "photos", "נשמר ✓", "ok");
+}
+const viewer = $("photoDlg");
+let viewing = null;
+function openPhoto(id, pid, src) {
+  viewing = { id, pid };
+  $("photoImg").src = src;
+  viewer.showModal();
+}
+$("photoClose").addEventListener("click", () => viewer.close());
+viewer.addEventListener("click", (e) => { if (e.target === viewer) viewer.close(); });
+$("photoDelete").addEventListener("click", async () => {
+  if (!viewing || !confirm("למחוק את התמונה?")) return;
+  const { id, pid } = viewing;
+  viewer.close();
+  try { await deleteDoc(doc(db, "boards", boardId, "apartments", id, "photos", pid)); }
+  catch (err) { console.error(err); showError("מחיקת התמונה נכשלה. נסו שוב."); }
+});
+
 function render() {
   const sorted = [...apts.entries()].sort((x, y) => (x[1].price || 0) - (y[1].price || 0) || String(x[1].address).localeCompare(String(y[1].address), "he"));
   const list = $("list");
@@ -515,7 +611,7 @@ function render() {
     if (want !== card.el) list.insertBefore(card.el, want);
     prev = card.el;
   }
-  for (const [id, card] of cards) if (!apts.has(id)) { card.el.remove(); cards.delete(id); }
+  for (const [id, card] of cards) if (!apts.has(id)) { card.unsubPhotos?.(); card.el.remove(); cards.delete(id); }
   let empty = list.querySelector(".empty");
   if (!empty) { empty = document.createElement("p"); empty.className = "empty"; list.append(empty); }
   empty.textContent = !loaded ? "טוען דירות…" : apts.size === 0 ? "אין עדיין דירות בלוח הזה." : "אין דירות שמתאימות לסינון.";
@@ -566,7 +662,7 @@ $("addForm").addEventListener("submit", async (e) => {
   const data = {
     id: ref.id, address, rooms, floor: $("fFloor").value.trim(), sqm, price, prevPrice: null,
     source: "נוסף ידנית", publisher: "", url, listingNote: $("fNote").value.trim(),
-    status: "לא נבדק", checkedBy: "", contact: "", notes: "", updatedAt: serverTimestamp(),
+    status: "לא נבדק", checkedBy: "", contact: "", notes: "", visitNotes: "", updatedAt: serverTimestamp(),
   };
   $("addSave").disabled = true;
   $("formErr").textContent = navigator.onLine ? "" : "אין חיבור. הדירה תתווסף כשהחיבור יחזור.";
