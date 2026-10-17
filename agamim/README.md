@@ -14,3 +14,6 @@ Deploy: `firebase deploy --project agamim-apartments` (hosting + rules).
 
 Visit photos are compressed in the browser (max 1600px JPEG, under ~700KB) and
 stored as data URLs in `apartments/{id}/photos`, so no Cloud Storage/billing is needed.
+
+2026-10-17: the board was cleared and now holds only lake-street listings
+(אגם דלתון), added directly; `seed.mjs` still holds the original 15 for reference.

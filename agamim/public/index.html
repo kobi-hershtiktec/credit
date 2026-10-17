@@ -207,7 +207,7 @@
 <header class="top">
   <div>
     <h1>דירות למכירה באגמים, אשקלון</h1>
-    <p>4 חדרים, 1.6–1.7 מיליון ₪ (עד 1.8 למיקוח)</p>
+    <p>4 חדרים עם נוף לאגם</p>
   </div>
 </header>
 
@@ -215,8 +215,8 @@
   <div class="bar-inner">
     <div class="chips" id="priceFilter" role="group" aria-label="סינון לפי מחיר">
       <button class="chip" data-v="all" aria-pressed="true">כל המחירים</button>
-      <button class="chip" data-v="upto17" aria-pressed="false">עד 1.7 מיליון</button>
-      <button class="chip" data-v="17to18" aria-pressed="false">1.7–1.8 (למיקוח)</button>
+      <button class="chip" data-v="upto18" aria-pressed="false">עד 1.8 מיליון</button>
+      <button class="chip" data-v="over18" aria-pressed="false">מעל 1.8 מיליון</button>
     </div>
     <div class="chips" id="statusFilter" role="group" aria-label="סינון לפי סטטוס">
       <button class="chip" data-v="all" aria-pressed="true">כל הסטטוסים</button>
@@ -233,7 +233,7 @@
 <main id="list"></main>
 
 <footer id="foot" hidden>
-  <p>ממוצע עסקאות 4 חדרים באגמים מתחילת 2026: כ-1.65 מיליון; מוכרים מבקשים בממוצע כ-100 אלף מעל (ביזפורטל, 21.8.2026). ביד2 האזור מופיע כ'שקמים ואגמים' — לוודא בשיחה שהכתובת באגמים.</p>
+  <p>ממוצע עסקאות 4 חדרים באגמים מתחילת 2026: כ-1.65 מיליון; מוכרים מבקשים בממוצע כ-100 אלף מעל (ביזפורטל, 21.8.2026). ביד2 האזור מופיע כ'שקמים ואגמים' — לוודא בשיחה שהכתובת באגמים ושרואים את האגם מהדירה.</p>
 </footer>
 
 <div class="nokey" id="nokey" hidden>
@@ -348,8 +348,8 @@ bindChips("statusFilter", "status");
 
 function passes(a) {
   const p = Number(a.price) || 0;
-  if (filters.price === "upto17" && p > 1700000) return false;
-  if (filters.price === "17to18" && (p <= 1700000 || p > 1800000)) return false;
+  if (filters.price === "upto18" && p > 1800000) return false;
+  if (filters.price === "over18" && p <= 1800000) return false;
   if (filters.status !== "all" && (a.status || "לא נבדק") !== filters.status) return false;
   return true;
 }
