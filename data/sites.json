@@ -1403,5 +1403,13 @@
   ],
   "already_digital": false,
   "hiring_on_site": false
+ },
+ "http://bservice.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
  }
 }
