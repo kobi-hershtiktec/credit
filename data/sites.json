@@ -1411,5 +1411,43 @@
   ],
   "already_digital": false,
   "hiring_on_site": false
+ },
+ "http://www.bergerz.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "http://www.eshed-fountains.co.il/": {
+  "manual": [
+   "pdf_form"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://chikplumb.my.canva.site/contact-us": {
+  "manual": [
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://dcard.org.il/dudicohen/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "http://www.perfect-hadbarot.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
  }
 }
