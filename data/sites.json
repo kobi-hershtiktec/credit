@@ -1449,5 +1449,55 @@
   ],
   "already_digital": false,
   "hiring_on_site": false
+ },
+ "https://santehnik-michael.netlify.app/": {
+  "manual": [
+   "whatsapp_contact"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "http://shufman.co.il/": {
+  "manual": [],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "http://yourcleaningservices.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://dor-locksmith.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://bigmoving.pro/": {
+  "manual": [
+   "whatsapp_contact"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://hovalotnet.co.il/": {
+  "manual": [
+   "whatsapp_contact"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://www.digisire.co.il/?utm_source=google&utm_medium=gbp&utm_campaign=business_profile": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": true,
+  "hiring_on_site": false
  }
 }
