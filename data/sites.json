@@ -1499,5 +1499,40 @@
   ],
   "already_digital": true,
   "hiring_on_site": false
+ },
+ "https://www.avnerfelixsadon.com/": {
+  "manual": [
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://korsia.co.il/": {
+  "manual": [
+   "whatsapp_contact"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://www.elrongates.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "https://miyatzva120.co.il/": {
+  "manual": [
+   "whatsapp_contact",
+   "call_to_schedule"
+  ],
+  "already_digital": false,
+  "hiring_on_site": false
+ },
+ "http://www.my-cleaning-company.com/": {
+  "manual": [],
+  "already_digital": false,
+  "hiring_on_site": false
  }
 }
